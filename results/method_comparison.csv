@@ -1,0 +1,4 @@
+Method,Flagged count
+Rule-based baseline,7
+GCN + Isolation Forest (active users only),91
+Confirmed burst pattern,17
