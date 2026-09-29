@@ -48,9 +48,20 @@ try:
     n_nodes_to_show = st.sidebar.slider("Nodes to display", 50, 500, 200)
 
     top_priority = list(burst_users) + list(flagged - burst_users)
-    node_subset = set(top_priority[:n_nodes_to_show // 2])
-    remaining = [n for n in node_list if n not in node_subset]
-    node_subset.update(np.random.choice(remaining, size=min(n_nodes_to_show, len(remaining)), replace=False))
+    seed_users = top_priority[:min(len(top_priority), n_nodes_to_show // 3)]
+
+    node_subset = set(seed_users)
+    for u in seed_users:
+        if u in G:
+            node_subset.update(G.neighbors(u))
+
+    remaining_users = [n for n in node_list if n.startswith("user_") and n not in node_subset]
+    n_extra = min(n_nodes_to_show // 3, len(remaining_users))
+    extra_users = np.random.choice(remaining_users, size=n_extra, replace=False) if n_extra > 0 else []
+    for u in extra_users:
+        if u in G:
+            node_subset.add(u)
+            node_subset.update(list(G.neighbors(u))[:3])
 
     subG = G.subgraph(node_subset)
     pos = nx.spring_layout(subG, seed=42)
@@ -65,9 +76,9 @@ try:
 
     def color_for(n):
         if n in burst_users:
-            return "#B03A2E"  # confirmed burst pattern
+            return "#B03A2E"
         elif n in flagged:
-            return "#E67E22"  # flagged, unconfirmed
+            return "#E67E22"
         elif n.startswith("user_"):
             return "#5B7FA6"
         return "#B4B2A9"
